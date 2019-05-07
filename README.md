@@ -13,11 +13,11 @@ The target audience are Slack owners or administrators, not end users.
 - To build it yourself, you need to use my own fork of SlackAPI(https://github.com/flipswitchingmonkey/SlackAPI)
 - You'll need to register an app under https://api.slack.com/apps to receive an Oauth Token to be used for authentication.
 - You'll also need to set up the following permissions:
-channels:read
-groups:read
-files:read
-files:write:user
-users:read
+  * channels:read
+  * groups:read
+  * files:read
+  * files:write:user
+  * users:read
 
 Since the API is rate-limited, requests for a large amount of file listings are made at intervals. Same goes for deletion. (roughly once per second (1250ms currently, as the rate is limited to 50+ requests per second)
 
