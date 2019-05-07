@@ -10,6 +10,7 @@ However, Slack _does_ offer quite an extensive API which will let you files.list
 
 The target audience are Slack owners or administrators, not end users.
 
+- To build it yourself, you need to use my own fork of SlackAPI(https://github.com/flipswitchingmonkey/SlackAPI)
 - You'll need to register an app under https://api.slack.com/apps to receive an Oauth Token to be used for authentication.
 - You'll also need to set up the following permissions:
 channels:read
