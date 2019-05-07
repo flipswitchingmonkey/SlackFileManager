@@ -42,7 +42,7 @@ namespace SlackFileManager
         List<ResponseFile> responseFiles;
 
         int maxFilesTotal, maxFilesPerPage;
-        int apiCallDelay = 1500;
+        int apiCallDelay = 1250;
 
         struct FileListOptions
         {
@@ -212,26 +212,10 @@ namespace SlackFileManager
             if (responseFiles.Count < maxFilesTotal && response.paging.page < response.paging.pages)
             {
                 SetStatus($"Delaying next request by {apiCallDelay}ms...");
-                Task.Delay(1500).ContinueWith(t => {
+                Task.Delay(apiCallDelay).ContinueWith(t => {
                     options.page = response.paging.page + 1; GetFilesFromSlack(options);
                 });
             }
-        }
-
-        private void AddChannels(Channel[] channels)
-        {
-            foreach (var channel in channels)
-            {
-                var r = new ResponseChannel(channel.name);
-                responseChannels.Add(r);
-                Debug.WriteLine(channel.name);
-            }
-            slackFiles.Items.Refresh();
-        }
-
-        private void AddEntry(Channel c)
-        {
-
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -329,6 +313,45 @@ namespace SlackFileManager
             ApplyFilter();
         }
 
+        private void DeleteSelected_Click(object sender, RoutedEventArgs e)
+        {
+            var files = slackFiles.SelectedItems.Cast<ResponseFile>().ToList();
+            if (files==null || files.Count == 0) return;
+
+            MessageBoxResult dialogResult = MessageBox.Show($"Are you sure you wish to delete the {files.Count} files?", "Are you sure?", MessageBoxButton.YesNo);
+            if (dialogResult == MessageBoxResult.Yes)
+            {
+                DeleteFiles(files);
+            }
+            else if (dialogResult == MessageBoxResult.No)
+            {
+                return;
+            }
+        }
+
+        private void DeleteFiles(List<ResponseFile> files, int currentFile=0)
+        {
+            if (files == null || currentFile > files.Count-1) return;
+
+            client.DeleteFile((response) => {
+                if (response.ok)
+                {
+                    RemoveItemFromSlackFiles(files[currentFile]);
+                    Debug.WriteLine($"Deleted {files[currentFile].name}: {response.ok}");
+                }
+                else
+                {
+                    Debug.WriteLine($"Error deleting file {files[currentFile].name}: {response.ok}");
+                }
+                if (currentFile+1 < files.Count-1)
+                {
+                    Task.Delay(apiCallDelay).ContinueWith(t => {
+                        DeleteFiles(files, currentFile+1);
+                    });
+                }
+            }, files[currentFile].id);
+        }
+        
         private void SetStatus(string statusText)
         {
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => { StatusLabel.Content = statusText; }));

@@ -53,7 +53,6 @@
                       ItemsSource="{Binding responseUsers, ElementName=window}" DisplayMemberPath="name"/>
             <Button Name="RefreshUsers" Content="Load" Click="RefreshUsers_Click" />
             <Label Content="FileTypes" DockPanel.Dock="Left"/>
-            <Button Name="TogglePropertyGrid" Width="50" Content="Info" DockPanel.Dock="Right" Click="TogglePropertyGrid_Click"/>
             <ComboBox Name="ComboFileTypes" DockPanel.Dock="Left" Margin="0,0,10,0"/>
         </DockPanel>
         <Grid Grid.Row="2" VerticalAlignment="Center">
@@ -63,12 +62,20 @@
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="70"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Label Content="Filter Results:" Grid.Column="0" FontWeight="Bold"/>
             <Label Content="Name" Grid.Column="1"/>
             <TextBox Name="FilterByName" TextChanged="FilterByName_TextChanged" Grid.Column="2"/>
             <Label Content="Username" Grid.Column="3"/>
             <TextBox Name="FilterByUserName" Grid.Column="4" TextChanged="FilterByUserName_TextChanged"/>
+            <Label Content="Actions:" FontWeight="Bold" Grid.Column="5"/>
+            <StackPanel Orientation="Horizontal" Grid.Column="6" HorizontalAlignment="Right">
+                <Button Name="DeleteSelected" Width="100" Content="Delete Selected" Height="26" VerticalAlignment="Top" Click="DeleteSelected_Click" />
+                <Button Name="TogglePropertyGrid" Width="100" Content="Toggle Info" Click="TogglePropertyGrid_Click"/>
+            </StackPanel>
+
         </Grid>
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
