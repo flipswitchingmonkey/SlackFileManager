@@ -7,7 +7,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:SlackFileManager"
         mc:Ignorable="d"
-        Title="MainWindow" Height="650" Width="1200" Closing="Window_Closing">
+        Title="Slack File Manager" Height="650" Width="1200" Closing="Window_Closing">
     <Window.Resources>
         <!--<local:ResponseFileList x:Key="responseFileList"/>
         <CollectionViewSource x:Key="slackfiles" Source="{StaticResource responseFileList}">
@@ -19,6 +19,13 @@
         </CollectionViewSource>-->
         <local:BitmapImageConverter x:Key="BitmapImageConverter"/>
         <local:DateConverter x:Key="DateConverter"/>
+        <Style x:Key="DeletedRowStyle" TargetType="{x:Type TextBlock}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding is_deleted}" Value="true">
+                    <Setter Property="TextDecorations" Value="Strikethrough" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -88,11 +95,17 @@
                     CanUserResizeRows="False" CanUserSortColumns="True"
                       MinHeight="100" SelectionChanged="slackFiles_SelectionChanged" Margin="0,-1,0,1">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{Binding name}" MinWidth="150"/>
+                    <DataGridTemplateColumn Header="Name" MinWidth="150" Width="SizeToCells" IsReadOnly="True" SortMemberPath="name" CanUserSort="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding name}" HorizontalAlignment="Left" Style="{StaticResource ResourceKey=DeletedRowStyle}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Size" MinWidth="60" Width="SizeToCells" IsReadOnly="True" SortMemberPath="size" CanUserSort="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Label Content="{Binding size}" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding size}" HorizontalAlignment="Right" Style="{StaticResource ResourceKey=DeletedRowStyle}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -107,13 +120,13 @@
                     <DataGridTextColumn Header="UserID" Binding="{Binding user}" MinWidth="60" FontFamily="Consolas"/>
                     <DataGridTextColumn Header="UserName" Binding="{Binding username}" MinWidth="60"/>
                     <DataGridTextColumn Header="RealName" Binding="{Binding linkedUser.real_name}" MinWidth="60"/>
-                    <DataGridTemplateColumn Header="Action" MinWidth="160" Width="SizeToCells" IsReadOnly="True" SortMemberPath="size" CanUserSort="True">
+                    <!--<DataGridTemplateColumn Header="Action" MinWidth="160" Width="SizeToCells" IsReadOnly="True" SortMemberPath="size" CanUserSort="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Name="DeleteFile" Content="Delete" Click="DeleteFile_Click"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    </DataGridTemplateColumn>-->
                 </DataGrid.Columns>
             </DataGrid>
             <GridSplitter Grid.Column="1"
@@ -127,7 +140,13 @@
             </xctk:PropertyGrid>
         </Grid>
         <Grid Grid.Row="4">
-            <Label Name="StatusLabel"/>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Label Name="StatusLabel" Grid.Column="0"/>
+            <ProgressBar Name="Progress" Grid.Column="1" Value="0" Minimum="0" Maximum="100"/>
+            <Label Name="ProgressLabel" Grid.Column="1" Content="0/0" HorizontalContentAlignment="Center"/>
         </Grid>
     </Grid>
 </Window>

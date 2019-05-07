@@ -203,12 +203,14 @@ namespace SlackFileManager
                 if (res.Count() > 0)
                 {
                     newFile.linkedUser = res.First();
-                    newFile.username = res.First().name;
+                    if (file.username == "")
+                        newFile.username = res.First().name;
                 }
                 responseFiles.Add(newFile);
             }
             slackFiles.Items.Refresh();
-            SetStatus($"File list received. Page {response.paging.page}/{response.paging.pages}");
+            SetStatus($"Page received. (Received: {response.paging.page} Available: {response.paging.pages})");
+            SetProgress((response.paging.page) / ((double)maxFilesTotal/maxFilesPerPage) * 100.0, $"Receiving {response.paging.page} / {Math.Ceiling((double)maxFilesTotal / (double)maxFilesPerPage)}");
             if (responseFiles.Count < maxFilesTotal && response.paging.page < response.paging.pages)
             {
                 SetStatus($"Delaying next request by {apiCallDelay}ms...");
@@ -258,7 +260,9 @@ namespace SlackFileManager
                 client.DeleteFile((response) => {
                     if (response.ok)
                     {
-                        RemoveItemFromSlackFiles(file);
+                        file.is_deleted = true;
+                        SlackFilesRefresh();
+                        SetStatus($"Deleted file  {file.name}");
                         Debug.WriteLine($"Deleted {file.name}: {response.ok}");
                     }
                     else
@@ -271,14 +275,6 @@ namespace SlackFileManager
             {
                 return;
             }
-        }
-
-        private void RemoveItemFromSlackFiles(ResponseFile file)
-        {
-            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => {
-                responseFiles.Remove(file);
-                slackFiles.Items.Refresh();
-            }));
         }
 
         private void RefreshUsers_Click(object sender, RoutedEventArgs e)
@@ -333,17 +329,32 @@ namespace SlackFileManager
         {
             if (files == null || currentFile > files.Count-1) return;
 
+            if (files[currentFile].is_deleted == true)
+            {
+                SetStatus($"Already deleted file {currentFile + 1} / {files.Count}: {files[currentFile].name}");
+                SetProgress((currentFile + 1) / (double)files.Count * 100.0, $"Deleting {currentFile + 1} / {files.Count}");
+
+                if (currentFile + 1 < files.Count - 1)
+                {
+                    DeleteFiles(files, currentFile + 1);
+                }
+                return;
+            }
+
             client.DeleteFile((response) => {
                 if (response.ok)
                 {
-                    RemoveItemFromSlackFiles(files[currentFile]);
+                    files[currentFile].is_deleted = true;
+                    SlackFilesRefresh();
+                    SetStatus($"Deleted file {currentFile + 1} / {files.Count}: {files[currentFile].name}");
+                    SetProgress((currentFile + 1) / (double)files.Count * 100.0, $"Deleting {currentFile+1} / {files.Count}");
                     Debug.WriteLine($"Deleted {files[currentFile].name}: {response.ok}");
                 }
                 else
                 {
                     Debug.WriteLine($"Error deleting file {files[currentFile].name}: {response.ok}");
                 }
-                if (currentFile+1 < files.Count-1)
+                if (currentFile+1 < files.Count)
                 {
                     Task.Delay(apiCallDelay).ContinueWith(t => {
                         DeleteFiles(files, currentFile+1);
@@ -352,9 +363,19 @@ namespace SlackFileManager
             }, files[currentFile].id);
         }
         
+        private void SlackFilesRefresh()
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => { slackFiles.Items.Refresh(); }));
+        }
+
         private void SetStatus(string statusText)
         {
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => { StatusLabel.Content = statusText; }));
+        }
+
+        private void SetProgress(double percent, string label="")
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() => { Progress.Value = percent; ProgressLabel.Content = label; }));
         }
 
     }

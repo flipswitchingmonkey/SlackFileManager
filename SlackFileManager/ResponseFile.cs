@@ -58,6 +58,7 @@ namespace SlackFileManager
         public string thumb_80 { get; set; }
         public string thumb_160 { get; set; }
         public string thumb_360_gif { get; set; }
+        public bool is_deleted { get; set; } = false;
 
         ResponseFile(string name = "blank")
         {
