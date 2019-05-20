@@ -7,16 +7,8 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:SlackFileManager"
         mc:Ignorable="d"
-        Title="Slack File Manager" Height="650" Width="1200" Closing="Window_Closing">
+        Title="{Binding VERSIONSTRING, RelativeSource={RelativeSource Self}}" Height="650" Width="1200" Closing="Window_Closing">
     <Window.Resources>
-        <!--<local:ResponseFileList x:Key="responseFileList"/>
-        <CollectionViewSource x:Key="slackfiles" Source="{StaticResource responseFileList}">
-            <CollectionViewSource.SortDescriptions>
-                --><!--<scm:SortDescription PropertyName="name"/>--><!--
-                <scm:SortDescription PropertyName="Size"/>
-                --><!--<scm:SortDescription PropertyName="user"/>--><!--
-            </CollectionViewSource.SortDescriptions>
-        </CollectionViewSource>-->
         <local:BitmapImageConverter x:Key="BitmapImageConverter"/>
         <local:DateConverter x:Key="DateConverter"/>
         <Style x:Key="DeletedRowStyle" TargetType="{x:Type TextBlock}">
@@ -59,6 +51,10 @@
             <ComboBox Name="ComboUser" MinWidth="150" DockPanel.Dock="Left" Margin="0,0,10,0" 
                       ItemsSource="{Binding responseUsers, ElementName=window}" DisplayMemberPath="name"/>
             <Button Name="RefreshUsers" Content="Load" Click="RefreshUsers_Click" />
+            <Label Content="Channel" DockPanel.Dock="Left"/>
+            <ComboBox Name="ComboChannels" MinWidth="150" DockPanel.Dock="Left" Margin="0,0,10,0" 
+                      ItemsSource="{Binding responseChannels, ElementName=window}" DisplayMemberPath="name"/>
+            <Button Name="RefreshChannels" Content="Load" Click="RefreshChannels_Click" />
             <Label Content="FileTypes" DockPanel.Dock="Left"/>
             <ComboBox Name="ComboFileTypes" DockPanel.Dock="Left" Margin="0,0,10,0"/>
         </DockPanel>
@@ -66,21 +62,26 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="115"/>
                 <ColumnDefinition Width="60"/>
-                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="70"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="60"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="230"/>
             </Grid.ColumnDefinitions>
             <Label Content="Filter Results:" Grid.Column="0" FontWeight="Bold"/>
             <Label Content="Name" Grid.Column="1"/>
             <TextBox Name="FilterByName" TextChanged="FilterByName_TextChanged" Grid.Column="2"/>
             <Label Content="Username" Grid.Column="3"/>
             <TextBox Name="FilterByUserName" Grid.Column="4" TextChanged="FilterByUserName_TextChanged"/>
-            <Label Content="Actions:" FontWeight="Bold" Grid.Column="5"/>
-            <StackPanel Orientation="Horizontal" Grid.Column="6" HorizontalAlignment="Right">
-                <Button Name="DeleteSelected" Width="100" Content="Delete Selected" Height="26" VerticalAlignment="Top" Click="DeleteSelected_Click" />
-                <Button Name="TogglePropertyGrid" Width="100" Content="Toggle Info" Click="TogglePropertyGrid_Click"/>
+            <Label Content="FileType:" Grid.Column="5"/>
+            <ComboBox Name="FilterByFileType" Grid.Column="6" SelectionChanged="FilterByFileType_SelectionChanged"/>
+            <Label Content="Actions:" FontWeight="Bold" Grid.Column="7"/>
+            <StackPanel Orientation="Horizontal" Grid.Column="16" HorizontalAlignment="Right">
+                <Button Name="DeleteSelected" Width="100" Content="Delete Selected" Height="26" VerticalAlignment="Top" Click="DeleteSelected_Click" Margin="5,0,0,0"/>
+                <Button Name="DownloadSelected" Width="120" Content="Download Selected" Height="26" VerticalAlignment="Top" Click="DownloadSelected_Click" Margin="5,0,5,0"/>
+                <!--<Button Name="TogglePropertyGrid" Width="100" Content="Toggle Info" Click="TogglePropertyGrid_Click"/>-->
             </StackPanel>
 
         </Grid>
@@ -88,12 +89,13 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="400" Name="ColumnPropertyGrid"/>
+                <ColumnDefinition Width="250" Name="ColumnPropertyGrid"/>
+                <ColumnDefinition Width="150"/>
             </Grid.ColumnDefinitions>
             <DataGrid Grid.Column="0" Name="slackFiles" AutoGenerateColumns="False" 
                       CanUserReorderColumns="True" CanUserResizeColumns="True" 
-                    CanUserResizeRows="False" CanUserSortColumns="True"
-                      MinHeight="100" SelectionChanged="slackFiles_SelectionChanged" Margin="0,-1,0,1">
+                    CanUserResizeRows="False" CanUserSortColumns="True" CanUserDeleteRows="False" CanUserAddRows="False"
+                      MinHeight="100" SelectionChanged="slackFiles_SelectionChanged" Margin="0,-1,0,1" KeyDown="SlackFiles_KeyDown">
                 <DataGrid.Columns>
                     <DataGridTemplateColumn Header="Name" MinWidth="150" Width="SizeToCells" IsReadOnly="True" SortMemberPath="name" CanUserSort="True">
                         <DataGridTemplateColumn.CellTemplate>
@@ -109,14 +111,8 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <!--<DataGridTemplateColumn Header="Thumbnail" MinWidth="60" Width="SizeToCells" IsReadOnly="True" CanUserSort="False">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Image Source="{Binding thumb_360, Converter={StaticResource BitmapImageConverter}}" Height="200"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>-->
                     <DataGridTextColumn Header="Date" Binding="{Binding timestamp, Converter={StaticResource DateConverter}}" MinWidth="80" FontFamily="Consolas"/>
+                    <DataGridTextColumn Header="FileType" Binding="{Binding filetype}" MinWidth="60"/>
                     <DataGridTextColumn Header="UserID" Binding="{Binding user}" MinWidth="60" FontFamily="Consolas"/>
                     <DataGridTextColumn Header="UserName" Binding="{Binding username}" MinWidth="60"/>
                     <DataGridTextColumn Header="RealName" Binding="{Binding linkedUser.real_name}" MinWidth="60"/>
@@ -135,9 +131,23 @@
                           Background="DarkGray" 
                           ShowsPreview="True"
                           Width="5"/>
-            <xctk:PropertyGrid x:Name="propertyGrid" Margin="0" Grid.Column="2"
-                                     AutoGenerateProperties="True">
-            </xctk:PropertyGrid>
+            <Grid Margin="0" Grid.Column="2" Grid.ColumnSpan="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <xctk:PropertyGrid x:Name="propertyGrid" Margin="0" AutoGenerateProperties="True" Grid.Row="0"/>
+                <GridSplitter Grid.Row="1"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Center"
+                          Background="DarkGray" 
+                          ShowsPreview="True"
+                          Height="5"/>
+                <Label Content="No Thumbnail" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Image Name="PreviewThumbnail" Grid.Row="2"/>
+                <WebBrowser Name="PreviewBrowser" Grid.Row="2" Visibility="Hidden"/>
+            </Grid>
         </Grid>
         <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
