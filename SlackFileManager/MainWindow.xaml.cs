@@ -303,8 +303,15 @@ namespace SlackFileManager
             else
             {
                 PreviewThumbnail.Visibility = Visibility.Hidden;
-                PreviewBrowser.Visibility = Visibility.Visible;
-                PreviewBrowser.NavigateToString(selected.preview);
+                if (selected.preview != null)
+                {
+                    PreviewBrowser.Visibility = Visibility.Visible;
+                    PreviewBrowser.NavigateToString(selected.preview);
+                }
+                else
+                {
+                    PreviewBrowser.Visibility = Visibility.Hidden;
+                }
                 return;
             }
             
