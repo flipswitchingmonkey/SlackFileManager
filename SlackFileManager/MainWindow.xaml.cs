@@ -32,7 +32,7 @@ namespace SlackFileManager
     public partial class MainWindow : Window
     {
         SlackClient client;
-        public string VERSIONSTRING { get; } = "Slack File Manager v0.2";
+        public string VERSIONSTRING { get; } = "Slack File Manager v0.21";
 
         public string Oauth_Value
         {

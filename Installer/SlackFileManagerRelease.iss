@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "SlackFileManager"
-#define MyAppVersion "0.2"
+#define MyAppVersion "0.21"
 #define MyAppPublisher "908"
 #define MyAppURL "https://github.com/flipswitchingmonkey"
 #define MyAppExeName "SlackFileManager.exe"
